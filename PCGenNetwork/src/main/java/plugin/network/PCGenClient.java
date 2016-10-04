@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.logging.Level;
-import marauroa.client.net.PerceptionHandler;
 import marauroa.common.game.RPEvent;
 import marauroa.common.game.RPObject;
 import org.openide.util.Lookup;
@@ -30,16 +29,11 @@ import simple.server.core.event.TextEvent;
  */
 @ServiceProviders({
     @ServiceProvider(service = ClientFrameworkProvider.class)
-    ,
-    @ServiceProvider(service = SelfChangeListener.class)
-    ,
-    @ServiceProvider(service = AddListener.class)
-    ,
-    @ServiceProvider(service = DeleteListener.class)
-    ,
-    @ServiceProvider(service = LoginProvider.class)
-    ,
-    @ServiceProvider(service = MessageProvider.class)})
+    ,@ServiceProvider(service = SelfChangeListener.class)
+    ,@ServiceProvider(service = AddListener.class)
+    ,@ServiceProvider(service = DeleteListener.class)
+    ,@ServiceProvider(service = LoginProvider.class)
+    ,@ServiceProvider(service = MessageProvider.class)})
 public class PCGenClient extends DefaultClient implements SelfChangeListener,
         AddListener, DeleteListener, LoginProvider, MessageProvider {
 
