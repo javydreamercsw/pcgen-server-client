@@ -4,8 +4,9 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.logging.Logger;
+import marauroa.common.game.RPAction;
 import marauroa.common.game.RPEvent;
 import marauroa.common.game.RPObject;
 import org.openide.util.Lookup;
@@ -14,14 +15,19 @@ import org.openide.util.lookup.ServiceProviders;
 import simple.client.ClientFrameworkProvider;
 import simple.client.DefaultClient;
 import simple.client.LoginProvider;
-import simple.client.MessageProvider;
 import simple.client.api.AddListener;
 import simple.client.api.DeleteListener;
 import simple.client.api.IWorldManager;
 import simple.client.api.SelfChangeListener;
 import simple.client.event.listener.ClientRPEventNotifier;
+import static simple.server.core.action.WellKnownActionConstant.FROM;
+import static simple.server.core.action.WellKnownActionConstant.TARGET;
+import static simple.server.core.action.WellKnownActionConstant.TEXT;
+import simple.server.core.action.chat.PrivateChatAction;
+import simple.server.core.action.chat.PublicChatAction;
 import simple.server.core.event.PrivateTextEvent;
 import simple.server.core.event.TextEvent;
+import simple.server.core.tool.Tool;
 
 /**
  *
@@ -32,15 +38,15 @@ import simple.server.core.event.TextEvent;
     ,@ServiceProvider(service = SelfChangeListener.class)
     ,@ServiceProvider(service = AddListener.class)
     ,@ServiceProvider(service = DeleteListener.class)
-    ,@ServiceProvider(service = LoginProvider.class)
-    ,@ServiceProvider(service = MessageProvider.class)})
-public class PCGenClient extends DefaultClient implements SelfChangeListener,
-        AddListener, DeleteListener, LoginProvider, MessageProvider {
+    ,@ServiceProvider(service = LoginProvider.class)})
+public final class PCGenClient extends DefaultClient implements SelfChangeListener,
+        AddListener, DeleteListener, LoginProvider, INetworkClient {
 
     private RPObject myself;
     private final List<String> queue = new ArrayList<>();
     private static final Logger LOG
             = Logger.getLogger(PCGenClient.class.getSimpleName());
+    private INetworkView view;
 
     public PCGenClient() {
         setClientManager(new PCGenClientManager(this));
@@ -124,12 +130,12 @@ public class PCGenClient extends DefaultClient implements SelfChangeListener,
 
     @Override
     public void displayLoginDialog() {
-
+        //Not to be implemented since it is in the plugin set up.
     }
 
     @Override
     public void getEmailFromUser() {
-
+        //Not to be implemented since it is in the plugin set up.
     }
 
     @Override
@@ -157,17 +163,50 @@ public class PCGenClient extends DefaultClient implements SelfChangeListener,
     }
 
     public static void main(String[] args) {
-        new PCGenClient().startClient();
-    }
-
-    private void startClient() {
         int port = 32190;
         String host = "localhost";
+        new PCGenClient().connect(port, host, "user", "user", "user",
+                "PCGen", "1.00");
+    }
+
+    @Override
+    public void connect(int port, String host, String user, String pw,
+            String character, String game, String version) {
         try {
-            connect(host, "user", "user", "user", "" + port, "PCGen", "1.00");
-            run();
+            connect(host, user, pw, character, "" + port, game, version);
         } catch (SocketException ex) {
             LOG.log(Level.SEVERE, null, ex);
+        }
+    }
+
+    @Override
+    public INetworkView getView() {
+        return view;
+    }
+
+    @Override
+    public void setView(INetworkView view) {
+        this.view = view;
+    }
+
+    @Override
+    public void sendIM(String target, String text) {
+        RPAction action = new RPAction();
+        action.put("type", PrivateChatAction.PRIVATE_CHAT);
+        action.put(TEXT, text);
+        action.put(FROM, Tool.extractName(getMyObject()));
+        action.put(TARGET, target);
+        //Send private chat action
+        getClientManager().send(action);
+    }
+
+    @Override
+    public void sendBroadcast(String message) {
+        if (!message.isEmpty()) {
+            RPAction action = new RPAction();
+            action.put("type", PublicChatAction.CHAT);
+            action.put(TEXT, message);
+            getClientManager().send(action);
         }
     }
 }

@@ -44,5 +44,4 @@ public interface INetworkModel {
     void sendMessage();
 
     void setPaneIcon();
-    
 }
